@@ -25,10 +25,20 @@
 // elsewhere in this crate then resolves through the shim. Cargo selects the
 // target via the `target_os = "none"` cfg (set by x86_64-macula.json).
 #![cfg_attr(target_os = "none", no_std)]
+#![cfg_attr(target_os = "none", feature(prelude_import))]
 #[cfg(target_os = "none")]
 extern crate alloc;
 #[cfg(target_os = "none")]
 extern crate macula_std as std;
+
+// Inject the macula_std prelude into every module the same way real `std`
+// does, so unqualified Vec/Box/String/vec!/format! continue to resolve in
+// every file of this crate without per-file `use` edits. Without this the
+// no_std prelude (core's) is used, which is missing the alloc-level items.
+#[cfg(target_os = "none")]
+#[prelude_import]
+#[allow(unused_imports)]
+use macula_std::prelude::v1::*;
 
 use std::{
     fmt,

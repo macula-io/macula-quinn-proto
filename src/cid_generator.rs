@@ -1,6 +1,6 @@
 use std::hash::Hasher;
 
-use rand::{Rng, RngCore};
+use rand::{Rng, RngCore, TryRngCore};
 
 use crate::Duration;
 use crate::MAX_CID_SIZE;
@@ -77,7 +77,9 @@ impl RandomConnectionIdGenerator {
 impl ConnectionIdGenerator for RandomConnectionIdGenerator {
     fn generate_cid(&mut self) -> ConnectionId {
         let mut bytes_arr = [0; MAX_CID_SIZE];
-        rand::rngs::OsRng.fill_bytes(&mut bytes_arr[..self.cid_len]);
+        rand::rngs::OsRng
+            .unwrap_err()
+            .fill_bytes(&mut bytes_arr[..self.cid_len]);
 
         ConnectionId::new(&bytes_arr[..self.cid_len])
     }
@@ -105,7 +107,7 @@ pub struct HashedConnectionIdGenerator {
 impl HashedConnectionIdGenerator {
     /// Create a generator with a random key
     pub fn new() -> Self {
-        Self::from_key(rand::rngs::OsRng.random())
+        Self::from_key(rand::rngs::OsRng.unwrap_err().random())
     }
 
     /// Create a generator with a specific key
@@ -135,7 +137,9 @@ impl Default for HashedConnectionIdGenerator {
 impl ConnectionIdGenerator for HashedConnectionIdGenerator {
     fn generate_cid(&mut self) -> ConnectionId {
         let mut bytes_arr = [0; NONCE_LEN + SIGNATURE_LEN];
-        rand::rngs::OsRng.fill_bytes(&mut bytes_arr[..NONCE_LEN]);
+        rand::rngs::OsRng
+            .unwrap_err()
+            .fill_bytes(&mut bytes_arr[..NONCE_LEN]);
         let mut hasher = rustc_hash::FxHasher::default();
         hasher.write_u64(self.key);
         hasher.write(&bytes_arr[..NONCE_LEN]);

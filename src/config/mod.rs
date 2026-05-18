@@ -179,12 +179,12 @@ impl Default for EndpointConfig {
     fn default() -> Self {
         #[cfg(all(feature = "aws-lc-rs", not(feature = "ring")))]
         use aws_lc_rs::hmac;
-        use rand::RngCore;
+        use rand::{RngCore, TryRngCore};
         #[cfg(feature = "ring")]
         use ring::hmac;
 
         let mut reset_key = [0; 64];
-        rand::rngs::OsRng.fill_bytes(&mut reset_key);
+        rand::rngs::OsRng.unwrap_err().fill_bytes(&mut reset_key);
 
         Self::new(Arc::new(hmac::Key::new(hmac::HMAC_SHA256, &reset_key)))
     }
@@ -396,11 +396,11 @@ impl ServerConfig {
     pub fn with_crypto(crypto: Arc<dyn crypto::ServerConfig>) -> Self {
         #[cfg(all(feature = "aws-lc-rs", not(feature = "ring")))]
         use aws_lc_rs::hkdf;
-        use rand::RngCore;
+        use rand::{RngCore, TryRngCore};
         #[cfg(feature = "ring")]
         use ring::hkdf;
 
-        let mut rng = rand::rngs::OsRng;
+        let mut rng = rand::rngs::OsRng.unwrap_err();
         let mut master_key = [0u8; 64];
         rng.fill_bytes(&mut master_key);
         let master_key = hkdf::Salt::new(hkdf::HKDF_SHA256, &[]).extract(&master_key);
