@@ -116,6 +116,13 @@ features = ["os_rng", "std_rng"]
 git = "https://codeberg.org/macula-internal/macula-std.git"
 branch = "main"
 
+# Macula no_std mode: f64::cbrt and f64::powi are inherent methods in std
+# but not in core. The CUBIC congestion controller calls both at one site
+# each. libm supplies free-function equivalents.
+[target.'cfg(target_os = "none")'.dependencies.libm]
+version = "0.2"
+default-features = false
+
 [dependencies.ring]
 version = "0.17"
 optional = true

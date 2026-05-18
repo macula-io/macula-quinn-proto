@@ -36,14 +36,23 @@ impl State {
     // K = cbrt(w_max * (1 - beta_cubic) / C) (Eq. 2)
     fn cubic_k(&self, max_datagram_size: u64) -> f64 {
         let w_max = self.w_max / max_datagram_size as f64;
-        (w_max * (1.0 - BETA_CUBIC) / C).cbrt()
+        let x = w_max * (1.0 - BETA_CUBIC) / C;
+        #[cfg(target_os = "none")]
+        return libm::cbrt(x);
+        #[cfg(not(target_os = "none"))]
+        x.cbrt()
     }
 
     // W_cubic(t) = C * (t - K)^3 - w_max (Eq. 1)
     fn w_cubic(&self, t: Duration, max_datagram_size: u64) -> f64 {
         let w_max = self.w_max / max_datagram_size as f64;
 
-        (C * (t.as_secs_f64() - self.k).powi(3) + w_max) * max_datagram_size as f64
+        let dt = t.as_secs_f64() - self.k;
+        #[cfg(target_os = "none")]
+        let dt3 = libm::pow(dt, 3.0);
+        #[cfg(not(target_os = "none"))]
+        let dt3 = dt.powi(3);
+        (C * dt3 + w_max) * max_datagram_size as f64
     }
 
     // W_est(t) = w_max * beta_cubic + 3 * (1 - beta_cubic) / (1 + beta_cubic) *
