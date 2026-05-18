@@ -20,6 +20,16 @@
 #![allow(clippy::too_many_arguments)]
 #![warn(clippy::use_self)]
 
+// Macula no_std mode: when compiling for the macula-kernel target, declare
+// no_std and alias the macula_std shim crate as `std`. Every `use std::*`
+// elsewhere in this crate then resolves through the shim. Cargo selects the
+// target via the `target_os = "none"` cfg (set by x86_64-macula.json).
+#![cfg_attr(target_os = "none", no_std)]
+#[cfg(target_os = "none")]
+extern crate alloc;
+#[cfg(target_os = "none")]
+extern crate macula_std as std;
+
 use std::{
     fmt,
     net::{IpAddr, SocketAddr},

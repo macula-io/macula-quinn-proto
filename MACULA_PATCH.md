@@ -9,11 +9,16 @@ Used by [macula-kernel](https://codeberg.org/macula-internal/macula-kernel)
 as the in-kernel QUIC state machine. The kernel target is `no_std` and
 cannot satisfy `std`-feature demands forced through unification.
 
-## The patch
+## The patches (v0.11.14-macula2)
 
-In `Cargo.toml` (cargo-normalised; the form cargo actually consumes):
+### Cargo.toml
 
 ```diff
+ [dependencies.rand]
+ version = "0.9"
++default-features = false
++features = ["os_rng", "std_rng"]
+
  [dependencies.rustls]
  version = "0.23.5"
 -features = ["std"]
@@ -24,12 +29,54 @@ In `Cargo.toml` (cargo-normalised; the form cargo actually consumes):
  version = "0.1.10"
 -features = ["std"]
  default-features = false
+
++[target.'cfg(target_os = "none")'.dependencies.macula-std]
++git = "https://codeberg.org/macula-internal/macula-std.git"
++branch = "main"
 ```
 
 `Cargo.toml.orig` is unchanged because in the upstream workspace these
 features are set at the workspace level, not at the consuming crate.
 Cargo reads `Cargo.toml` (not `Cargo.toml.orig`) when consuming a crate
 via git source.
+
+### src/lib.rs (extern crate alias)
+
+```diff
++#![cfg_attr(target_os = "none", no_std)]
++#[cfg(target_os = "none")]
++extern crate alloc;
++#[cfg(target_os = "none")]
++extern crate macula_std as std;
+```
+
+This makes every `use std::*` in the crate (58 occurrences across 41
+files) resolve to `macula_std` when compiling for the kernel target.
+Host builds (`cargo build` without `--target`) see `target_os != "none"`
+and use real `std` unchanged.
+
+### Library rand call sites (5 sites)
+
+`rand::rng()` returns `ThreadRng` which requires `rand/thread_rng` which
+requires `rand/std`. To drop `rand/std` (and break the
+`rand_core/std -> getrandom/std` cascade) we replace the 5 library
+call sites with `rand::rngs::OsRng` (CSPRNG backed by RDRAND via our
+`getrandom_backend="rdrand"` cfg). Test sites (4 of them, all under
+`#[cfg(test)]` modules) are left untouched; tests compile host-side
+where `rand::rng()` still works.
+
+```diff
+- rand::rng().fill_bytes(&mut buf);
++ rand::rngs::OsRng.fill_bytes(&mut buf);
+
+- rand::rng().random()
++ rand::rngs::OsRng.random()
+
+- let rng = &mut rand::rng();
++ let mut rng = rand::rngs::OsRng;
+```
+
+Locations: `src/cid_generator.rs:80,108,138` and `src/config/mod.rs:187,403`.
 
 ## Why this is needed
 

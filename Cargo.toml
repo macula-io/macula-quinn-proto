@@ -107,6 +107,14 @@ optional = true
 
 [dependencies.rand]
 version = "0.9"
+default-features = false
+features = ["os_rng", "std_rng"]
+
+# Macula no_std mode: pulled in only when compiling for target_os = "none".
+# Aliased as `std` in src/lib.rs to satisfy this crate's `use std::*` paths.
+[target.'cfg(target_os = "none")'.dependencies.macula-std]
+git = "https://codeberg.org/macula-internal/macula-std.git"
+branch = "main"
 
 [dependencies.ring]
 version = "0.17"
