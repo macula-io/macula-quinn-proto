@@ -113,7 +113,7 @@ features = ["os_rng", "std_rng"]
 # Macula no_std mode: pulled in only when compiling for target_os = "none".
 # Aliased as `std` in src/lib.rs to satisfy this crate's `use std::*` paths.
 [target.'cfg(target_os = "none")'.dependencies.macula-std]
-git = "https://codeberg.org/macula-internal/macula-std.git"
+git = "https://github.com/macula-io/macula-std.git"
 branch = "main"
 
 # Macula no_std mode: f64::cbrt and f64::powi are inherent methods in std

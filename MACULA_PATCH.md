@@ -5,7 +5,7 @@ Vendored fork of [quinn-rs/quinn](https://github.com/quinn-rs/quinn)'s
 removing `features = ["std"]` from the `rustls` and `tracing`
 dependency declarations.
 
-Used by [macula-kernel](https://codeberg.org/macula-internal/macula-kernel)
+Used by [macula-kernel](https://github.com/macula-io/macula-kernel)
 as the in-kernel QUIC state machine. The kernel target is `no_std` and
 cannot satisfy `std`-feature demands forced through unification.
 
@@ -31,7 +31,7 @@ cannot satisfy `std`-feature demands forced through unification.
  default-features = false
 
 +[target.'cfg(target_os = "none")'.dependencies.macula-std]
-+git = "https://codeberg.org/macula-internal/macula-std.git"
++git = "https://github.com/macula-io/macula-std.git"
 +branch = "main"
 ```
 
